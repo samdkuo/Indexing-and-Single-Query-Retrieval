@@ -6,12 +6,12 @@ json_data=open(file_directory).read()
 
 class json_parse():
 
-    json_data = dict()
+    json_data
 
     def __init__(self, jsonFile):
         json1_file = open(jsonFile)
         json1_str = json1_file.read()
-        self.json1_data = json.loads(json1_str)[0]
+        self.json_data = json.loads(json1_str)
 
     def result(self):
-        return json_data
+        return self.json_data
