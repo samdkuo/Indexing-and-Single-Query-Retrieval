@@ -1,5 +1,5 @@
 import os.path, re, operator, pymongo
-from BeautifulSoup import BeautifulSoup, Comment 
+from BeautifulSoup import BeautifulSoup, Comment
 from HTMLParser import HTMLParser
 from collections import defaultdict
 from pymongo import MongoClient
@@ -48,7 +48,7 @@ def insert_tokens(doc_id, tokens):
             {"id": word},
             {"$set" : {"$inc" : {"freq" : freq}}},
             {"$push" : {"docs" : doc_id}})
-        print(result.matched_count >= 0)
+        print(doc_id, tokens)
 
 
 iterate_files()
