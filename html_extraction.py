@@ -6,10 +6,12 @@ from collections import defaultdict
 '''iterate through files'''
 def iterate_files():
     for dir in range(0, 1):
-        for f in range(0, 500):
-            file = "WEBPAGES_RAW/" + str(dir) +"/" + str(f)
+        for f in range(8, 10):
+            key = str(dir) +"/" + str(f)
+            file = "WEBPAGES_RAW/" + key 
             if os.path.isfile(file):
-                print file
+                tokens = parse_html(file)
+
 
 '''parse html; tokenize; return dictionary'''
 def parse_html(path_name):
@@ -30,14 +32,11 @@ def parse_html(path_name):
     word_freq = defaultdict(int)
     for word in content:
         word_freq[word] += 1
-    word_freq = sorted(word_freq.iteritems(), key=operator.itemgetter(1), reverse=True)
-
     return word_freq
 
       
-parse_html("WEBPAGES_RAW/0/2")
 '''input tokens into db'''
-def insert_tokens(dict):
-  print "here"
+def insert_tokens(doc_id, tokens):
+  print doc_id
 
-
+iterate_files()
