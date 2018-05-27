@@ -1,54 +1,78 @@
-import os.path, re, operator, pymongo
-from BeautifulSoup import BeautifulSoup, Comment
-from HTMLParser import HTMLParser
+import os.path, re, operator, shutil
+from bs4 import BeautifulSoup, Comment
+from html.parser import HTMLParser
 from collections import defaultdict
-from pymongo import MongoClient
-
-client = MongoClient()
-db = client.IndexDB
-collection = db.word_collection
+from shutil import copyfile
 
 '''iterate through files'''
 def iterate_files():
-    for dir in range(0, 1):
-        for f in range(8, 10):
-            key = str(dir) +"/" + str(f)
-            file = "WEBPAGES_RAW/" + key 
-            if os.path.isfile(file):
-                tokens = parse_html(file)
-                insert_tokens(key, tokens)
+    for d in range(0, 75):
+        print("In directory " + str(d))
+        folder_dict = parse_html(d)
+        new_terms = add_existing_terms_to_index(folder_dict)
+        add_new_terms_to_index(new_terms)
 
 
 '''parse html; tokenize; return dictionary'''
-def parse_html(path_name):
-    content = []
-    with open(path_name, "r") as data:
-        soup = BeautifulSoup(data.read())
-        comments = soup.findAll(text=lambda text:isinstance(text, Comment))
-        [comment.extract() for comment in comments] 
-        [script.extract() for script in soup("script")]
-        [style.extract() for style in soup("style")] 
-        content = " ".join(item.strip() for item in soup.findAll(text=True))
-        content = HTMLParser().unescape(content)
-        content = content.encode("ascii", "ignore")
+def parse_html(d):
+    folder_dict = defaultdict(dict)
+    for f in range(0, 500):
+        #print("In file " + str(f))
+        key = str(d) +"/" + str(f)
+        file = "WEBPAGES_RAW/" + key
+        
+        if os.path.isfile(file):
+            content = []
+            with open(file, "r", encoding="utf-8") as data:
+                soup = BeautifulSoup(data.read())
+                comments = soup.findAll(text=lambda text:isinstance(text, Comment))
+                [comment.extract() for comment in comments] 
+                [script.extract() for script in soup("script")]
+                [style.extract() for style in soup("style")] 
+                content = " ".join(item.strip() for item in soup.findAll(text=True))
+                content = HTMLParser().unescape(content)
+                content = content.encode("ascii", "ignore")
+                content = content.decode('utf-8')
 
-    pattern = re.compile('[\W_]+')
-    content = pattern.sub(' ', content).lower().split()
+            pattern = re.compile('[\W_]+')
+            content = pattern.sub(' ', content).lower().split()
   
-    word_freq = defaultdict(int)
-    for word in content:
-        word_freq[word] += 1
-    return word_freq
+            for word in content:
+                if len(word) > 1:
+                    if word not in folder_dict:
+                        folder_dict[word] = defaultdict(int)
+                    folder_dict[word][key] +=1
+    return folder_dict
 
-      
-'''input tokens into db'''
-def insert_tokens(doc_id, tokens):
-    for word, freq in tokens.items():
-        result = collection.update_one(
-            {"id": word},
-            {"$set" : {"$inc" : {"freq" : freq}}},
-            {"$push" : {"docs" : doc_id}})
-        print(doc_id, tokens)
+def add_existing_terms_to_index(folder_dict):
+    file = open("index.txt", "r")
+    temp = open("temp.txt", "w")
+    for line in file:
+        tokens = line.split("-")
+        term = tokens[0]
+        if term in folder_dict:
+            new_line = ""
+            for doc_id, freq in folder_dict[term].items():
+                new_line += "," + doc_id + ":" + str(freq)
+            temp.write(line.rstrip("\n") + new_line + "\n")
+            folder_dict.pop(term)
+        else:
+            temp.write(line)
+    file.close()
+    temp.close()
+    shutil.copyfile("temp.txt", "index.txt")
+    os.remove("temp.txt")
+    return folder_dict
 
+def add_new_terms_to_index(new_terms):
+    file = open("index.txt","a")
+    for term in new_terms:
+        new_line = ""
+        for doc_id, freq in new_terms[term].items():
+            new_line += doc_id + ":" + str(freq) + ","
+        file.write(term + "-" + new_line + "\n")
+    file.close()
 
 iterate_files()
+    
+    

@@ -10,6 +10,6 @@ class json_parse():
         return self.json_data
 
     def get_url(self, key):
-        return self.json_data[key].encode("ascii", "ignore")
+        return self.json_data[key].encode("ascii", "ignore").decode("utf-8")
 
 
