@@ -1,6 +1,10 @@
-import os.path, re, operator, shutil
-from bs4 import BeautifulSoup, Comment
-from html.parser import HTMLParser
+import os.path, re, operator, shutil, codecs
+try:
+    from bs4 import BeautifulSoup, Comment
+    from html.parser import HTMLParser
+except:
+    from BeautifulSoup import BeautifulSoup, Comment
+    from HTMLParser import HTMLParser
 from collections import defaultdict
 from shutil import copyfile
 
@@ -23,8 +27,9 @@ def parse_html(d):
         
         if os.path.isfile(file):
             content = []
-            with open(file, "r", encoding="utf-8") as data:
-                soup = BeautifulSoup(data.read())
+            with codecs.open(file, "r", encoding="utf-8") as data:
+                data = data.read().encode("ascii", "ignore")
+                soup = BeautifulSoup(data)
                 comments = soup.findAll(text=lambda text:isinstance(text, Comment))
                 [comment.extract() for comment in comments] 
                 [script.extract() for script in soup("script")]
@@ -45,24 +50,26 @@ def parse_html(d):
     return folder_dict
 
 def add_existing_terms_to_index(folder_dict):
-    file = open("index.txt", "r")
-    temp = open("temp.txt", "w")
-    for line in file:
-        tokens = line.split("-")
-        term = tokens[0]
-        if term in folder_dict:
-            new_line = ""
-            for doc_id, freq in folder_dict[term].items():
-                new_line += "," + doc_id + ":" + str(freq)
-            temp.write(line.rstrip("\n") + new_line + "\n")
-            folder_dict.pop(term)
-        else:
-            temp.write(line)
-    file.close()
-    temp.close()
-    shutil.copyfile("temp.txt", "index.txt")
-    os.remove("temp.txt")
-    return folder_dict
+    try:
+        file = open("index.txt", "r")
+        temp = open("temp.txt", "w")
+        for line in file:
+            tokens = line.split("-")
+            term = tokens[0]
+            if term in folder_dict:
+                new_line = ""
+                for doc_id, freq in folder_dict[term].items():
+                    new_line += "," + doc_id + ":" + str(freq)
+                temp.write(line.rstrip("\n") + new_line + "\n")
+                folder_dict.pop(term)
+            else:
+                temp.write(line)
+        file.close()
+        temp.close()
+        shutil.copyfile("temp.txt", "index.txt")
+        os.remove("temp.txt")
+    finally:
+        return folder_dict
 
 def add_new_terms_to_index(new_terms):
     file = open("index.txt","a")

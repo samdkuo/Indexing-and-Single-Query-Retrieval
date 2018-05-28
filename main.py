@@ -1,8 +1,12 @@
 from json_parse import json_parse
+import html_extraction.py
 import sys
+import os.path
 
 def main():
     total_urls = json_parse("WEBPAGES_RAW/bookkeeping.json")
+    if not os.path.isfile("index.txt"):
+      iterate_files()
     docs = search("irvine")
     for d in docs:
         print(total_urls.get_url(d))
