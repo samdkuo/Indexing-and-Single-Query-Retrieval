@@ -1,5 +1,5 @@
 from json_parse import json_parse
-import html_extraction, sys, os.path, tf_idf_calculation
+import html_extraction, sys, os.path, tf_idf_calculation, operator
 
 def main():
     total_urls = json_parse("WEBPAGES_RAW/bookkeeping.json")
@@ -15,16 +15,16 @@ def main():
             break
         docs = search(query)
         count = 1
-        try:
-            for d in docs:
-                print(str(count) +". " + total_urls.get_url(d))
-                count += 1
-        except:
+        for d, w in docs:
+            print d, " ", w
+            print(str(count) +". " + total_urls.get_url(d))
+            count += 1
+        if not docs:
             print("UNABLE TO FIND QUERY")
         print("\nINPUT Q TO STOP SEARCHING")
 
 def search(query):
-    terms = query.split(" ")
+    terms = query.strip().split(" ")
     if len(terms) == 1:
         return search_one(terms[0])[:10]
 
@@ -33,32 +33,56 @@ def search(query):
       docs_list.append(search_one(term))
 
     docs_list.sort(key=len)
-    matched = docs_list[0]
-    docs_list.remove(matched)
+    current = docs_list[0]
+    docs_list.remove(current)
 
     for docs in docs_list:
-        matched = compare(matched, docs)
+        current = compare_and(current, docs)
+        if len(current) > len(docs):
+            docs_list.append(current)
+            current = docs
 
-    return matched[:10]
-    
-def compare(first, second):
-    match = []
+    return current[:10]
+
+def compare_or(first, second):
+    combined = []
     while first and second:
         d1 = first[0]
         d2 = second[0]
-        if d1 == d2:
-            match.append(d1)
+        if d1[1] > d2[1]:
+            combined.append(d1)
+            first.remove(d1)
+        else:
+            combined.append(d2)
+            second.remove(d2)
+    if first:
+        combined.extend(first)
+    elif second:
+        combined.extend(second)
+    return combined
+    
+def compare_and(first, second):
+    matched = []
+    while first and second:
+        d1 = first[0]
+        d2 = second[0]
+        if d1[0] == d2[0]:
+            matched.append(d1)
             first.remove(d1)
             second.remove(d2)
-        elif d1 < d2:
+        elif d1[1] > d2[1]:
             first.remove(d1)
         else:
             second.remove(d2)
-    return match
+    
+    if not matched:
+        return compare_or(first, second)
+    
+    return matched
 
 def search_one(term):
-    docs = []
-    file = open("index.txt", "r")
+    docs = {}
+    file = open("tf_idf_index.txt", "r")
     for line in file:
         i = 0
         tokens = line.split("-")
@@ -68,10 +92,11 @@ def search_one(term):
             for pair in posting_list:
                 if len(pair) > 0:
                     doc_id = pair.split(":")[0]
-                    docs.append(doc_id)
+                    weight = pair.split(":")[1]
+                    docs[doc_id] = weight
             file.close()
             break
-    return docs
+    return sorted(docs.iteritems(), key=operator.itemgetter(1), reverse=True)
 
 if __name__ == "__main__":
     main()
