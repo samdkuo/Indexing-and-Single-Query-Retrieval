@@ -1,5 +1,25 @@
 from json_parse import json_parse
 import html_extraction, sys, os.path, tf_idf_calculation, operator
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+total_urls = json_parse("WEBPAGES_RAW/bookkeeping.json")
+
+formHtml = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search</title>
+</head>
+<body>
+    <form action = "http://localhost:5000/result" method = "POST">
+         <p>Search <input type = "text" name = "Search" /></p>
+         <p><input type = "submit" value = "submit" /></p>
+      </form>
+</body>
+</html>
+"""
 
 def main():
     total_urls = json_parse("WEBPAGES_RAW/bookkeeping.json")
@@ -16,6 +36,7 @@ def main():
         docs = search(query)
         count = 1
         for d, w in docs:
+            print d, " ", w
             print(str(count) +". " + total_urls.get_url(d))
             count += 1
         if not docs:
@@ -97,5 +118,37 @@ def search_one(term):
             break
     return sorted(docs.iteritems(), key=operator.itemgetter(1), reverse=True)
 
+
+@app.route('/')
+def searchPage():
+    if not os.path.isfile("index.txt"):
+        html_extraction.iterate_files()
+
+    if not os.path.isfile("tf_idf_index.txt"):
+        tf_idf_calculation.loop_thru_file()
+    return formHtml
+
+@app.route('/result',methods = ['POST', 'GET'])
+def result():
+   return_string = ""
+   if request.method == 'POST':
+      result_dict = request.form
+      result = ""
+      for k,v in result_dict.items():
+          result = v
+      print(result)
+      query = result.lower()
+      docs = search(query)
+      count = 1
+      try:
+          for d in docs:
+              return_string += str(count) + ". " + total_urls.get_url(d) + "<br>"
+              #print(str(count) + ". " + total_urls.get_url(d))
+              count += 1
+      except:
+          return_string =  "UNABLE TO FIND QUERY"
+      return return_string
+    
 if __name__ == "__main__":
+    app.run()
     main()
