@@ -1,15 +1,24 @@
 from json_parse import json_parse
-import html_extraction.py
+import html_extraction
 import sys
 import os.path
+import tf_idf_calculation
 
 def main():
     total_urls = json_parse("WEBPAGES_RAW/bookkeeping.json")
     if not os.path.isfile("index.txt"):
       iterate_files()
-    docs = search("irvine")
-    for d in docs:
-        print(total_urls.get_url(d))
+  
+    while True:
+        query = raw_input("search: ").lower()
+        if query == "q":
+            break
+        docs = search(query)
+        count = 1
+        for d in docs:
+            print(str(count) +". " + total_urls.get_url(d))
+            count += 1
+        print("\nINPUT Q TO STOP SEARCHING \n")
 
 def search(term):
     docs = []

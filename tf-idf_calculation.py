@@ -35,7 +35,6 @@ def loop_thru_file():
     file.close()
     tf_idf_file.close()
 
-loop_thru_file()
         
             
         

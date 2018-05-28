@@ -80,6 +80,4 @@ def add_new_terms_to_index(new_terms):
         file.write(term + "-" + new_line + "\n")
     file.close()
 
-iterate_files()
-    
     
