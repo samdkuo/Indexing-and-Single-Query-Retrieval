@@ -15,7 +15,7 @@ def tf_idf(term_dict):
 
 def loop_thru_file():
     file = open("index.txt", "r")
-    tf_idf_file = open("tf-idf_index.txt", "w")
+    tf_idf_file = open("tf_idf_index.txt", "w")
     for line in file:
         term_dict = defaultdict(int)
         tokens = line.split("-")
@@ -35,11 +35,3 @@ def loop_thru_file():
     file.close()
     tf_idf_file.close()
 
-        
-            
-        
-        
-    
-                
-                
-    
